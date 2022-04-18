@@ -31,6 +31,20 @@
 #ifndef APP_H
 #define APP_H
 
+#include "sl_power_manager.h"
+#include "src/ble.h"
+#include "src/log.h"
+#include "src/gpio.h"
+#include "src/adxl343.h"
+#include "src/timers.h"
+
+#define LOWEST_ENERGY_MODE 2
+#if (LOWEST_ENERGY_MODE == 0)
+  #define APP_IS_OK_TO_SLEEP      (false)
+#else
+  #define APP_IS_OK_TO_SLEEP      (true)
+#endif
+#define APP_SLEEP_ON_ISR_EXIT   (SL_POWER_MANAGER_SLEEP)
 
 /**************************************************************************//**
  * Application Init.

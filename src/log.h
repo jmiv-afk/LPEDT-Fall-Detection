@@ -13,7 +13,7 @@
 
 #if (DEBUG == 1)
   #define LOG(msg, ...) \
-    printf(msg"\n", ##__VA_ARGS__)
+    printf(msg "\n", ##__VA_ARGS__)
 #else
   #define LOG(msg, ...) // do nothing 
 #endif 

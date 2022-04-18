@@ -34,20 +34,31 @@ int accel_init()
     .dummyTxValue = 0x0,
     .frameLength = 8,
     .port = USART1,
-    .portLocationClk = 0,  // PA2
+    .portLocationClk = 30, // PA0
     .portLocationCs = 2,   // PA5
-    .portLocationRx = 3,   // PA4
-    .portLocationTx = 3,   // PA3
+    .portLocationRx = 1,   // PA2
+    .portLocationTx = 1,   // PA1
     .slaveStartMode = spidrvSlaveStartImmediate,
     .type = spidrvMaster
   };
 
   GPIO_PinModeSet(ACCEL_CS_PORT, ACCEL_CS_PIN, gpioModePushPull, 1);
-  LOG(" \n\n");
-  Ecode_t status = SPIDRV_Init(&accel_spi_handle, &spi_init);
+  Ecode_t status;
+  status = SPIDRV_Init(&accel_spi_handle, &spi_init);
   if (status != ECODE_OK) {
     return -1;
   }
+
+  // TODO: setup accelerometer interrupt driven settings here
+  LOG("accel_init returned %d", status);
+  accel_device_id_test();
+  accel_set_measurement_mode();
+
+  status = SPIDRV_DeInit(&accel_spi_handle);
+    if (status != ECODE_OK) {
+      return -1;
+    }
+
   return 0;
 }
 
@@ -69,7 +80,7 @@ int accel_set_measurement_mode()
   accel_write_register(ADXL343_POWER_CTL, 0x8);
   uint8_t ret = 0xff;
   accel_read_register(ADXL343_POWER_CTL, &ret);
-  LOG(" Measurement mode set to 0x%x", ret);
+  LOG(" Measurement mode set to 0x%x\n", ret);
   return 0;
 }
 

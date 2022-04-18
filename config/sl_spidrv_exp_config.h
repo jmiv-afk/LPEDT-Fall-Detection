@@ -51,7 +51,7 @@
 // <o SL_SPIDRV_EXP_CS_CONTROL> SPI master chip select (CS) control scheme.
 // <spidrvCsControlAuto=> CS controlled by the SPI driver
 // <spidrvCsControlApplication=> CS controlled by the application
-#define SL_SPIDRV_EXP_CS_CONTROL        spidrvCsControlAuto
+#define SL_SPIDRV_EXP_CS_CONTROL        spidrvCsControlApplication
 
 // <o SL_SPIDRV_EXP_SLAVE_START_MODE> SPI slave transfer start scheme
 // <spidrvSlaveStartImmediate=> Transfer starts immediately
@@ -64,28 +64,6 @@
 // <<< sl:start pin_tool >>>
 // <usart signal=TX,RX,CLK,(CS)> SL_SPIDRV_EXP
 // $[USART_SL_SPIDRV_EXP]
-#define SL_SPIDRV_EXP_PERIPHERAL                 USART1
-#define SL_SPIDRV_EXP_PERIPHERAL_NO              1
-
-// USART1 TX on PA3
-#define SL_SPIDRV_EXP_TX_PORT                    gpioPortA
-#define SL_SPIDRV_EXP_TX_PIN                     3
-#define SL_SPIDRV_EXP_TX_LOC                     3
-
-// USART1 RX on PA4
-#define SL_SPIDRV_EXP_RX_PORT                    gpioPortA
-#define SL_SPIDRV_EXP_RX_PIN                     4
-#define SL_SPIDRV_EXP_RX_LOC                     3
-
-// USART1 CLK on PA2
-#define SL_SPIDRV_EXP_CLK_PORT                   gpioPortA
-#define SL_SPIDRV_EXP_CLK_PIN                    2
-#define SL_SPIDRV_EXP_CLK_LOC                    0
-
-// USART1 CS on PA5
-#define SL_SPIDRV_EXP_CS_PORT                    gpioPortA
-#define SL_SPIDRV_EXP_CS_PIN                     5
-#define SL_SPIDRV_EXP_CS_LOC                     2
 // [USART_SL_SPIDRV_EXP]$
 // <<< sl:end pin_tool >>>
 
