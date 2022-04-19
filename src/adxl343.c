@@ -4,60 +4,71 @@
  * @author Jake Michael, jami1063@colorado.edu
  * ---------------------------------------------------------------------------*/
 
-#include <stdbool.h>
-#include "spidrv.h"
-#include "em_gpio.h"
-//#include "spidrv_config.h"
-#include "ecode.h"
-#include "log.h"
 #include "adxl343.h"
 
-static void accel_cs_set(bool setpt);
-static uint32_t accel_read_multi(uint8_t reg, uint8_t *rx, uint32_t nbytes);
-static uint32_t accel_read_register(uint8_t reg, uint8_t *rx);
-static uint32_t accel_write_register(uint8_t reg, uint8_t tx);
+#define ACCEL_CLK_PORT (gpioPortA)
+#define ACCEL_CLK_PIN  (0)
+#define ACCEL_CLK_LOC  (30)
 
-SPIDRV_HandleData_t accel_spi_handle;
+#define ACCEL_TX_PORT (gpioPortA)
+#define ACCEL_TX_PIN  (1)
+#define ACCEL_TX_LOC  (1)
+
+#define ACCEL_RX_PORT (gpioPortA)
+#define ACCEL_RX_PIN  (2)
+#define ACCEL_RX_LOC  (1)
 
 #define ACCEL_CS_PORT (gpioPortA)
 #define ACCEL_CS_PIN  (5)
+#define ACCEL_CS_LOC  (2)
+
+static uint32_t accel_read(uint8_t start_register, uint8_t *rx, uint32_t nbytes);
+static uint32_t accel_write(uint8_t start_register, uint8_t *tx, uint32_t nbytes);
+static inline void accel_cs_high() { GPIO_PinOutSet(ACCEL_CS_PORT, ACCEL_CS_PIN); }
+static inline void accel_cs_low() { GPIO_PinOutClear(ACCEL_CS_PORT, ACCEL_CS_PIN); }
 
 int accel_init()
 {
-  // The init structure - see datasheet pg. 169 for multiplexed location numbers
-  // corresponding to the proper pin/port
-  SPIDRV_Init_t spi_init = {
-    .bitOrder = spidrvBitOrderMsbFirst,
-    .bitRate = 1000000,
-    .clockMode = spidrvClockMode3,    // Clk_Polarity=1, Clk_Phase=1
-    .csControl = spidrvCsControlApplication,
-    .dummyTxValue = 0x0,
-    .frameLength = 8,
-    .port = USART1,
-    .portLocationClk = 30, // PA0
-    .portLocationCs = 2,   // PA5
-    .portLocationRx = 1,   // PA2
-    .portLocationTx = 1,   // PA1
-    .slaveStartMode = spidrvSlaveStartImmediate,
-    .type = spidrvMaster
-  };
-
+  // note: SPI is a part of the USART peripheral on the blue gecko
+  // Universal Synchronous Asynchronous Reciever Transmitter
+  // enable clocks for USART
+  CMU_ClockEnable(cmuClock_HFPER, true);
+  CMU_ClockEnable(cmuClock_USART1, true);
+  CMU_ClockEnable(cmuClock_GPIO, true);
+  
+  // setup and configure GPIO's, note that CS pin will be under application control
+  GPIO_PinModeSet(ACCEL_CLK_PORT, ACCEL_CLK_PIN, gpioModePushPull, 0);
+  GPIO_PinModeSet(ACCEL_TX_PORT, ACCEL_TX_PIN, gpioModePushPull, 0);
+  GPIO_PinModeSet(ACCEL_RX_PORT, ACCEL_RX_PIN, gpioModeInput, 0);
   GPIO_PinModeSet(ACCEL_CS_PORT, ACCEL_CS_PIN, gpioModePushPull, 1);
-  Ecode_t status;
-  status = SPIDRV_Init(&accel_spi_handle, &spi_init);
-  if (status != ECODE_OK) {
-    return -1;
-  }
 
-  // TODO: setup accelerometer interrupt driven settings here
-  LOG("accel_init returned %d", status);
+  // initialize USART1 for synchronous master mode, MSB first, CPOL=1, CPHA=1
+  USART_Reset(USART1);
+  USART_InitSync_TypeDef usart_init = USART_INITSYNC_DEFAULT;
+  usart_init.master = true;
+  usart_init.clockMode = usartClockMode3; // CPOL=1, CPHA=1
+  usart_init.msbf = true; // MSB first
+  USART_InitSync(USART1, &usart_init);
+  USART_BaudrateSyncSet(USART1, 0, 4000000);
+
+  // Enable I/O and set location - ref. manual pg 646
+  USART1->ROUTELOC0 = (USART1->ROUTELOC0 & ~(_USART_ROUTELOC0_TXLOC_MASK
+                        | _USART_ROUTELOC0_RXLOC_MASK | _USART_ROUTELOC0_CLKLOC_MASK))
+                        | (ACCEL_TX_LOC << _USART_ROUTELOC0_TXLOC_SHIFT)
+                        | (ACCEL_RX_LOC << _USART_ROUTELOC0_RXLOC_SHIFT)
+                        | (ACCEL_CLK_LOC << _USART_ROUTELOC0_CLKLOC_SHIFT);
+
+  USART1->ROUTEPEN  |=  USART_ROUTEPEN_CLKPEN  //| USART_ROUTEPEN_CSPEN
+                      | USART_ROUTEPEN_RXPEN | USART_ROUTEPEN_TXPEN;
+
+  USART_Enable(USART1, usartEnable);
+
   accel_device_id_test();
   accel_set_measurement_mode();
 
-  status = SPIDRV_DeInit(&accel_spi_handle);
-    if (status != ECODE_OK) {
-      return -1;
-    }
+
+  
+  // TODO: setup accelerometer interrupt driven settings here
 
   return 0;
 }
@@ -65,8 +76,8 @@ int accel_init()
 int accel_device_id_test()
 {
   uint8_t ret = 0;
-  accel_read_register(ADXL343_DEVID, &ret);
-  LOG("Device ID returned 0x%x", ret);
+  accel_read(ADXL343_DEVID, &ret, 1);
+  LOG("Device ID returned 0x%x\n", ret);
   return 0;
 }
 
@@ -77,18 +88,19 @@ int accel_set_measurement_mode()
   // 0  | 0  | Link | AUTO_SLEEP | Measure | Sleep | Wakeup  |
   // set measure bit to 1 to put part in measurement mode
   LOG("Setting measurement mode to 0x8\n");
-  accel_write_register(ADXL343_POWER_CTL, 0x8);
-  uint8_t ret = 0xff;
-  accel_read_register(ADXL343_POWER_CTL, &ret);
-  LOG(" Measurement mode set to 0x%x\n", ret);
+  uint8_t tx = 0x08;
+  accel_write(ADXL343_POWER_CTL, &tx, 1);
+  uint8_t ret = 0x00;
+  accel_read(ADXL343_POWER_CTL, &ret, 1);
+  LOG("Measurement mode set to 0x%x\n", ret);
   return 0;
 }
 
-int accel_get()
+int accel_get_acceleration()
 { 
   uint8_t rx_buf[6];
   int16_t accel[3];
-  accel_read_multi(ADXL343_DATAX0, rx_buf, 6);
+  accel_read(ADXL343_DATAX0, &rx_buf[0], 6);
   for (int i=0; i<3; i++)
   {
     accel[i] = (int16_t)( (rx_buf[2*i+1] << 0x8) | rx_buf[2*i] );
@@ -98,68 +110,49 @@ int accel_get()
   return 0;
 }
 
-static uint32_t accel_read_multi(uint8_t reg, uint8_t *rx, uint32_t nbytes)
+static uint32_t accel_read(uint8_t start_register, uint8_t *rx, uint32_t nbytes)
 {
-  Ecode_t status;
-  uint8_t cmd[nbytes+1];
-  uint8_t recv[nbytes+1];
-  
-  cmd[0] = MULTI_READ_CMD(reg);
-  accel_cs_set(0);
-  status = SPIDRV_MTransferB(&accel_spi_handle, cmd, recv, nbytes+1);
-  accel_cs_set(1);
-  if (status != ECODE_OK) 
+  if (nbytes <= 0 || rx == NULL) return -1;
+  USART1->CMD |= USART_CMD_CLEARTX | USART_CMD_CLEARRX;
+  uint8_t cmd;
+  if (nbytes > 1) 
   {
-    return status;
+    cmd = MULTI_READ_CMD(start_register);
   }
+  else if (nbytes == 1)
+  {
+    cmd = SINGLE_READ_CMD(start_register);
+  }
+  accel_cs_low();
+  USART_SpiTransfer(USART1, cmd);
   for (uint32_t i=0; i<nbytes; i++)
   {
-    *(rx + i) = recv[i+1];
+    rx[i] = USART_SpiTransfer(USART1, 0xFF);
   }
+  accel_cs_high();
   return 0;
 }
 
-static uint32_t accel_read_register(uint8_t reg, uint8_t *rx) 
+static uint32_t accel_write(uint8_t start_register, uint8_t *tx, uint32_t nbytes) 
 {
-  Ecode_t status;
-  uint8_t cmd[2];
-  uint8_t recv[2];
-  cmd[0] = SINGLE_READ_CMD(reg);
-  accel_cs_set(0);
-  status = SPIDRV_MTransferB(&accel_spi_handle, cmd, recv, 2);
-  accel_cs_set(1);
-  if (status != ECODE_OK) 
+  if (nbytes <= 0 || tx == NULL) return -1;
+  USART1->CMD |= USART_CMD_CLEARTX | USART_CMD_CLEARRX;
+  uint8_t cmd;
+  if (nbytes > 1) 
   {
-    return status;
+    cmd = MULTI_WRITE_CMD(start_register);
   }
-  *rx = recv[1];
+  else if (nbytes == 1)
+  {
+    cmd = SINGLE_WRITE_CMD(start_register);
+  }
+  accel_cs_low();
+  USART_SpiTransfer(USART1, cmd);
+  for (uint32_t i=0; i<nbytes; i++) 
+  {
+    USART_SpiTransfer(USART1, tx[i]); 
+  }
+  accel_cs_high();
   return 0;
 }
 
-static uint32_t accel_write_register(uint8_t reg, uint8_t tx) 
-{
-  uint8_t cmd[2] = {0,0};
-  cmd[0] = SINGLE_WRITE_CMD(reg);
-  cmd[1] = tx;
-  Ecode_t status;
-  accel_cs_set(0);
-  status = SPIDRV_MTransmitB(&accel_spi_handle, &cmd, sizeof(cmd));
-  accel_cs_set(1);
-  if (status != ECODE_OK) 
-  {
-    return status;
-  }
-  return 0;
-}
-
-static void accel_cs_set(bool setpt) 
-{
-  if (setpt) 
-  {
-    GPIO_PinOutSet(ACCEL_CS_PORT, ACCEL_CS_PIN);
-  }
-  else 
-  {
-    GPIO_PinOutClear(ACCEL_CS_PORT, ACCEL_CS_PIN);
-  }
-}

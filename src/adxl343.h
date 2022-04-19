@@ -8,7 +8,13 @@
 #ifndef _ADXL343_H_
 #define  _ADXL343_H_
 
-#include "spidrv.h"
+#include <stdbool.h>
+#include <em_core.h>
+#include <em_usart.h>
+#include <em_gpio.h>
+#include <em_cmu.h>
+
+#include "log.h"
 
 // Register masks / shifts:
 #define ADDRESS_MASK     (0x3F)
@@ -66,6 +72,6 @@
 int accel_init();
 int accel_device_id_test();
 int accel_set_measurement_mode();
-int accel_get();
+int accel_get_acceleration();
 
 #endif // _ADXL343_H_

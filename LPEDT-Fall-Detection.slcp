@@ -31,13 +31,11 @@ component:
 - {id: mpu}
 - {id: bluetooth_feature_system}
 - {id: gatt_configuration}
-- {id: emlib_letimer}
 - {id: bluetooth_feature_scanner}
+- {id: emlib_letimer}
 - {id: bluetooth_stack}
 - {id: component_catalog}
 - {id: ota_dfu}
-- instance: [exp]
-  id: spidrv
 - {id: bootloader_interface}
 - {id: rail_util_pti}
 - {id: app_assert}

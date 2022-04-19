@@ -129,26 +129,6 @@
 // [USART0]$
 
 // $[USART1]
-// USART1 CLK on PA0
-#define USART1_CLK_PORT                          gpioPortA
-#define USART1_CLK_PIN                           0
-#define USART1_CLK_LOC                           30
-
-// USART1 CS on PA5
-#define USART1_CS_PORT                           gpioPortA
-#define USART1_CS_PIN                            5
-#define USART1_CS_LOC                            2
-
-// USART1 RX on PA2
-#define USART1_RX_PORT                           gpioPortA
-#define USART1_RX_PIN                            2
-#define USART1_RX_LOC                            1
-
-// USART1 TX on PA1
-#define USART1_TX_PORT                           gpioPortA
-#define USART1_TX_PIN                            1
-#define USART1_TX_LOC                            1
-
 // [USART1]$
 
 // $[USART2]

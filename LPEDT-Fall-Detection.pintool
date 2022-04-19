@@ -2,9 +2,13 @@
 <device:XMLDevice xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:device="http://www.silabs.com/ss/hwconfig/document/device.ecore" name="pin_tool.EFR32BG13P632F512GM48" partId="mcu.arm.efr32.bg13.efr32bg13p632f512gm48" contextId="com.silabs.sdk.stack.super:3.2.3._-1746406279">
   <mode name="DefaultMode">
     <property object="DefaultMode" propertyId="mode.diagramLocation" value="100, 100"/>
+    <property object="PA0" propertyId="pin.reserve" value="Reserved"/>
+    <property object="PA1" propertyId="pin.reserve" value="Reserved"/>
+    <property object="PA2" propertyId="pin.reserve" value="Reserved"/>
     <property object="PA3" propertyId="pin.reserve" value="Reserved"/>
     <property object="PA4" propertyId="pin.reserve" value="Reserved"/>
     <property object="PA5" propertyId="ABModule.selectedRequirement" value="gpio%T%SL_BOARD_ENABLE_VCOM%T%sl_board_control_config.h"/>
+    <property object="PA5" propertyId="pin.reserve" value="Reserved"/>
     <property object="PD10" propertyId="pin.reserve" value="Reserved"/>
     <property object="PD11" propertyId="pin.reserve" value="Reserved"/>
     <property object="PD15" propertyId="ABModule.selectedRequirement" value="gpio%T%SL_BOARD_ENABLE_DISPLAY%T%sl_board_control_config.h"/>
@@ -19,10 +23,6 @@
     <property object="PORTIO" propertyId="portio.usart0.enable.tx" value="Enabled"/>
     <property object="PORTIO" propertyId="portio.usart0.location.rx" value="27"/>
     <property object="PORTIO" propertyId="portio.usart0.location.tx" value="27"/>
-    <property object="PORTIO" propertyId="portio.usart1.enable.clk" value="Enabled"/>
-    <property object="PORTIO" propertyId="portio.usart1.enable.cs" value="Enabled"/>
-    <property object="PORTIO" propertyId="portio.usart1.enable.rx" value="Enabled"/>
-    <property object="PORTIO" propertyId="portio.usart1.enable.tx" value="Enabled"/>
     <property object="PORTIO" propertyId="portio.usart1.location.clk" value="30"/>
     <property object="PORTIO" propertyId="portio.usart1.location.cs" value="2"/>
     <property object="PORTIO" propertyId="portio.usart1.location.rx" value="1"/>

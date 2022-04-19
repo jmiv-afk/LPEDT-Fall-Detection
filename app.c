@@ -67,7 +67,7 @@ SL_WEAK void app_init(void)
   letimer0_init(); // initialize the timers
   gpio_init();     // initialize the gpio
   int status = accel_init();
-
+  LOG("accel_init() returned %d", status);
 }
 
 /**************************************************************************//**
@@ -75,7 +75,7 @@ SL_WEAK void app_init(void)
  *****************************************************************************/
 SL_WEAK void app_process_action(void)
 {
-  // accel_get();
+  accel_get_acceleration();
   // gpio_TP1_toggle();
 }
 
