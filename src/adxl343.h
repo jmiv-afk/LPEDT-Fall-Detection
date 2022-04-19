@@ -17,11 +17,11 @@
 #include "log.h"
 
 // Register masks / shifts:
-#define ADDRESS_MASK     (0x3F)
-#define READ_SHIFT       (0x7)
-#define READ_MASK        (0x1 << READ_SHIFT)
-#define MULTI_BIT_SHIFT  (0x6)
-#define MULTI_BIT_MASK   (0x1 << MULTI_BIT_SHIFT)
+#define ADDRESS_MASK      (0x3F)
+#define READ_SHIFT        (0x7)
+#define READ_MASK         (0x1 << READ_SHIFT)
+#define MULTI_BYTE_SHIFT  (0x6)
+#define MULTI_BYTE_MASK   (0x1 << MULTI_BIT_SHIFT)
 
 // Write commands:
 #define SINGLE_READ_CMD(reg) ((reg & ADDRESS_MASK) | READ_MASK ) 

@@ -1,6 +1,6 @@
 /***************************************************************************//**
  * @file
- * @brief Device initialization for clocks.
+ * @brief Device initialization for LFXO.
  *******************************************************************************
  * # License
  * <b>Copyright 2019 Silicon Laboratories Inc. www.silabs.com</b>
@@ -27,23 +27,47 @@
  * 3. This notice may not be removed or altered from any source distribution.
  *
  ******************************************************************************/
-#include "sl_device_init_clocks.h"
+#ifndef SL_DEVICE_INIT_LFXO_H
+#define SL_DEVICE_INIT_LFXO_H
 
-#include "em_cmu.h"
+#include "sl_status.h"
 
-sl_status_t sl_device_init_clocks(void)
-{
-  CMU_ClockSelectSet(cmuClock_HF, cmuSelect_HFXO);
+/**
+ * @addtogroup device_init
+ * @{
+ * @addtogroup device_init_lfxo LFXO Initialization
+ * @brief Initialize the LFXO oscillator.
+ * @details
+ * Configure the low frequency crystal oscillator using settings in the
+ * configuration header `sl_device_init_lfxo_config.h`.
+ *
+ * The precision of the oscillator can be indicated using the configuration
+ * option `SL_DEVICE_INIT_LFXO_PRECISION`. This is used by certain wireless
+ * stacks to optimize wakeup time for scheduled events (such as Bluetooth
+ * advertising).
+ * @{
+ */
 
-  CMU_ClockEnable(cmuClock_HFLE, true);
-  CMU_ClockSelectSet(cmuClock_LFA, cmuSelect_LFXO);
-  CMU_ClockSelectSet(cmuClock_LFB, cmuSelect_LFXO);
-#if defined(_CMU_LFCCLKSEL_MASK)
-  CMU_ClockSelectSet(cmuClock_LFC, cmuSelect_LFXO);
-#endif
-#if defined(_CMU_LFECLKSEL_MASK)
-  CMU_ClockSelectSet(cmuClock_LFE, cmuSelect_LFXO);
-#endif
+/**
+ * Initialize LFXO
+ *
+ * @details
+ * Configure the low frequency crystal oscillator using settings in the
+ * configuration header `sl_device_init_lfxo_config.h`.
+ *
+ * The precision of the oscillator can be indicated using the configuration
+ * option `SL_DEVICE_INIT_LFXO_PRECISION`. This is used by certain wireless
+ * stacks to optimize wakeup time for scheduled events (such as Bluetooth
+ * advertising).
+ *
+ * @return Status code
+ * @retval SL_STATUS_OK LFXO initialized successfully
+ */
+sl_status_t sl_device_init_lfxo(void);
 
-  return SL_STATUS_OK;
-}
+/**
+ * @} device_init_lfxo
+ * @} device_init
+ */
+
+#endif // SL_DEVICE_INIT_LFXO_H

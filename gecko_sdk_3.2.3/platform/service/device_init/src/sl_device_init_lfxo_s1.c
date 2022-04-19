@@ -1,6 +1,6 @@
 /***************************************************************************//**
  * @file
- * @brief Device initialization for clocks.
+ * @brief Device initialization for LFXO.
  *******************************************************************************
  * # License
  * <b>Copyright 2019 Silicon Laboratories Inc. www.silabs.com</b>
@@ -27,23 +27,21 @@
  * 3. This notice may not be removed or altered from any source distribution.
  *
  ******************************************************************************/
-#include "sl_device_init_clocks.h"
+#include "sl_device_init_lfxo.h"
+#include "sl_device_init_lfxo_config.h"
 
 #include "em_cmu.h"
 
-sl_status_t sl_device_init_clocks(void)
+sl_status_t sl_device_init_lfxo(void)
 {
-  CMU_ClockSelectSet(cmuClock_HF, cmuSelect_HFXO);
+  CMU_LFXOInit_TypeDef lfxoInit = CMU_LFXOINIT_DEFAULT;
 
-  CMU_ClockEnable(cmuClock_HFLE, true);
-  CMU_ClockSelectSet(cmuClock_LFA, cmuSelect_LFXO);
-  CMU_ClockSelectSet(cmuClock_LFB, cmuSelect_LFXO);
-#if defined(_CMU_LFCCLKSEL_MASK)
-  CMU_ClockSelectSet(cmuClock_LFC, cmuSelect_LFXO);
-#endif
-#if defined(_CMU_LFECLKSEL_MASK)
-  CMU_ClockSelectSet(cmuClock_LFE, cmuSelect_LFXO);
-#endif
+  lfxoInit.mode = SL_DEVICE_INIT_LFXO_MODE;
+  lfxoInit.ctune = SL_DEVICE_INIT_LFXO_CTUNE;
+  lfxoInit.timeout = SL_DEVICE_INIT_LFXO_TIMEOUT;
+
+  CMU_LFXOInit(&lfxoInit);
+  CMU_LFXOPrecisionSet(SL_DEVICE_INIT_LFXO_PRECISION);
 
   return SL_STATUS_OK;
 }

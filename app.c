@@ -40,9 +40,7 @@
 
 bool app_is_ok_to_sleep(void)
 {
-
   return APP_IS_OK_TO_SLEEP;
-
 } // app_is_ok_to_sleep()
 
 
@@ -87,5 +85,5 @@ SL_WEAK void app_process_action(void)
  *****************************************************************************/
 void sl_bt_on_event(sl_bt_msg_t *evt)
 {
-  handle_ble_event(evt);
+  //handle_ble_event(evt);
 }

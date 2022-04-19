@@ -31,8 +31,9 @@ component:
 - {id: mpu}
 - {id: bluetooth_feature_system}
 - {id: gatt_configuration}
-- {id: bluetooth_feature_scanner}
+- {id: device_init_lfxo}
 - {id: emlib_letimer}
+- {id: bluetooth_feature_scanner}
 - {id: bluetooth_stack}
 - {id: component_catalog}
 - {id: ota_dfu}
