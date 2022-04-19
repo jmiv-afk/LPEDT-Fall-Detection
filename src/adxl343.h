@@ -21,15 +21,15 @@
 #define READ_SHIFT        (0x7)
 #define READ_MASK         (0x1 << READ_SHIFT)
 #define MULTI_BYTE_SHIFT  (0x6)
-#define MULTI_BYTE_MASK   (0x1 << MULTI_BIT_SHIFT)
+#define MULTI_BYTE_MASK   (0x1 << MULTI_BYTE_SHIFT)
 
 // Write commands:
 #define SINGLE_READ_CMD(reg) ((reg & ADDRESS_MASK) | READ_MASK ) 
-#define MULTI_READ_CMD(reg)  ((reg & ADDRESS_MASK) | MULTI_BIT_MASK | READ_MASK )
+#define MULTI_READ_CMD(reg)  ((reg & ADDRESS_MASK) | MULTI_BYTE_MASK | READ_MASK )
 
 // Read commands:
 #define SINGLE_WRITE_CMD(reg)  ((reg & ADDRESS_MASK))
-#define MULTI_WRITE_CMD(reg)   ((reg & ADDRESS_MASK) | MULTI_BIT_MASK)
+#define MULTI_WRITE_CMD(reg)   ((reg & ADDRESS_MASK) | MULTI_BYTE_MASK)
 
 /* ============================================================================
  *       REGISTER MAP
