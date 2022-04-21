@@ -30,36 +30,23 @@
 
 #include "app.h"
 
-
-/*****************************************************************************
- * Application Power Manager callbacks
- *****************************************************************************/
 #if defined(SL_CATALOG_POWER_MANAGER_PRESENT)
 
-
-
+// power manager callback
 bool app_is_ok_to_sleep(void)
 {
   return APP_IS_OK_TO_SLEEP;
 } // app_is_ok_to_sleep()
 
-
-
+// power manager callback
 sl_power_manager_on_isr_exit_t app_sleep_on_isr_exit(void)
 {
-
   return APP_SLEEP_ON_ISR_EXIT;
-
 } // app_sleep_on_isr_exit()
-
-
 
 #endif // defined(SL_CATALOG_POWER_MANAGER_PRESENT)
 
-
-/**************************************************************************//**
- * Application Init.
- *****************************************************************************/
+// application init
 SL_WEAK void app_init(void)
 {
   letimer0_init(); // initialize the timers
@@ -68,22 +55,16 @@ SL_WEAK void app_init(void)
   LOG("accel_init() returned %d", status);
 }
 
-/**************************************************************************//**
- * Application Process Action.
- *****************************************************************************/
+// process application actions
 SL_WEAK void app_process_action(void)
 {
-  accel_get_acceleration();
-  // gpio_TP1_toggle();
+  // do nothing
 }
 
-/**************************************************************************//**
- * Bluetooth stack event handler.
- * This overrides the dummy weak implementation.
- *
- * @param[in] evt Event coming from the Bluetooth stack.
- *****************************************************************************/
+// Bluetooth stack event handler.
+// This overrides the dummy weak implementation.
+// @param[in] evt Event coming from the Bluetooth stack.
 void sl_bt_on_event(sl_bt_msg_t *evt)
 {
-  //handle_ble_event(evt);
+  handle_ble_event(evt);
 }

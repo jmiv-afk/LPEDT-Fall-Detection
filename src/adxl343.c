@@ -22,10 +22,22 @@
 #define ACCEL_CS_PIN  (5)
 #define ACCEL_CS_LOC  (2)
 
-static uint32_t accel_read(uint8_t start_register, uint8_t *rx, uint32_t nbytes);
-static uint32_t accel_write(uint8_t start_register, uint8_t *tx, uint32_t nbytes);
+#define ACCEL_INT1_PORT (gpioPortA)
+#define ACCEL_INT1_PIN  (4)
+
+static int accel_read(uint8_t start_register, uint8_t *rx, uint32_t nbytes);
+static int accel_write(uint8_t start_register, uint8_t *tx, uint32_t nbytes);
 static inline void accel_cs_high() { GPIO_PinOutSet(ACCEL_CS_PORT, ACCEL_CS_PIN); }
 static inline void accel_cs_low() { GPIO_PinOutClear(ACCEL_CS_PORT, ACCEL_CS_PIN); }
+
+void GPIO_EVEN_IRQHandler()
+{
+  CORE_CRITICAL_SECTION(
+  uint32_t flags = GPIO_IntGetEnabled() & 0x55555555; // pickoff even bits
+  GPIO_IntClear(flags);
+  sl_bt_external_signal(evt_accel_GPIO_INT1);
+  );
+}
 
 int accel_init()
 {
@@ -42,6 +54,20 @@ int accel_init()
   GPIO_PinModeSet(ACCEL_RX_PORT, ACCEL_RX_PIN, gpioModeInput, 0);
   GPIO_PinModeSet(ACCEL_CS_PORT, ACCEL_CS_PIN, gpioModePushPull, 1);
 
+  // setup and configure interrupt GPIO's
+  GPIO_PinModeSet(ACCEL_INT1_PORT, ACCEL_INT1_PIN, gpioModeInput, 0);
+  // disable interrupts
+  uint32_t flags = GPIO_IntGetEnabled();
+  GPIO_IntDisable(flags);
+  GPIO_IntClear(flags);
+  GPIO_ExtIntConfig( ACCEL_INT1_PORT, // port
+                     ACCEL_INT1_PIN,  // pin
+                     ACCEL_INT1_PIN,  // interrupt number
+                     1,               // rising edge enable 
+                     0,               // falling edge enable
+                     1                // enable upon return
+                   );
+
   // initialize USART1 for synchronous master mode, MSB first, CPOL=1, CPHA=1
   USART_Reset(USART1);
   USART_InitSync_TypeDef usart_init = USART_INITSYNC_DEFAULT;
@@ -51,49 +77,76 @@ int accel_init()
   USART_InitSync(USART1, &usart_init);
   USART_BaudrateSyncSet(USART1, 0, 4000000);
 
-  // Enable I/O and set location - ref. manual pg 646
+  // enable I/O and set tx,rx,clk locations - ref. manual pg 646
   USART1->ROUTELOC0 = (USART1->ROUTELOC0 & ~(_USART_ROUTELOC0_TXLOC_MASK
                         | _USART_ROUTELOC0_RXLOC_MASK | _USART_ROUTELOC0_CLKLOC_MASK))
                         | (ACCEL_TX_LOC << _USART_ROUTELOC0_TXLOC_SHIFT)
                         | (ACCEL_RX_LOC << _USART_ROUTELOC0_RXLOC_SHIFT)
                         | (ACCEL_CLK_LOC << _USART_ROUTELOC0_CLKLOC_SHIFT);
-
-  USART1->ROUTEPEN  |=  USART_ROUTEPEN_CLKPEN  //| USART_ROUTEPEN_CSPEN
-                      | USART_ROUTEPEN_RXPEN | USART_ROUTEPEN_TXPEN;
+  // enable routes
+  USART1->ROUTEPEN |=   USART_ROUTEPEN_CLKPEN 
+                      | USART_ROUTEPEN_RXPEN 
+                      | USART_ROUTEPEN_TXPEN;
 
   USART_Enable(USART1, usartEnable);
 
-  accel_device_id_test();
-  accel_set_measurement_mode();
-
-
-  
   // TODO: setup accelerometer interrupt driven settings here
+  // read the device ID 
+  uint8_t val = 0;
+  accel_read(ADXL343_DEVID, &val, 1);
+  if (val != 0xE5)
+  {
+    LOG("Error: device ID != 0xe5, returned %d", val);
+  }
 
-  return 0;
-}
+  int settings_len = 29;
+  uint8_t settings[settings_len]; 
+  accel_read(ADXL343_THRESH_TAP, settings, settings_len);
+  for (int i=0; i<settings_len; i++)
+  {
+    LOG("Reg: 0x%x = 0x%x", i+0x1d, settings[i]);
+  }
 
-int accel_device_id_test()
-{
-  uint8_t ret = 0;
-  accel_read(ADXL343_DEVID, &ret, 1);
-  LOG("Device ID returned 0x%x\n", ret);
-  return 0;
-}
+  // disable interrupts during configuration
+  val = 0x0;
+  accel_write(ADXL343_INT_ENABLE, &val, 1);
 
-int accel_set_measurement_mode() 
-{
+  // set bandwidth register:
+  // D7 | D6 | D5 | D4        | D3 | D2 | D1 | D0 |
+  // 0  | 0  | 0  | LOW_POWER |      Rate         |
+  val = (1 << 4) | (0b1010); // use 100 Hz, low pwr adxl343 datasheet pg 12
+  accel_write(ADXL343_BW_RATE, &val, 1); 
+
+  // set free-fall threshold (scale factor = 62.5 mg/LSB)
+  val = 9; // = (62.5 * 9 = 562.5 mg)
+  accel_write(ADXL343_THRESH_FF, &val, 1);
+  // set free-fall time (scale factor = 5 ms/LSB)
+  val = 20; // = (5 * 20 = 100 ms)
+  accel_write(ADXL343_TIME_FF, &val, 1);
+
+  // setup interrupts
+  // Below register map applies to INT_ENABLE, INT_MAP, and INT_SOURCE
+  // D7         | D6         | D5         | D4       |
+  // DATA_READY | SINGLE_TAP | DOUBLE_TAP | ACTIVITY | 
+  // -----------+------------+------------+----------+
+  // D3         | D2         | D1         | D0       |
+  // INACTIVITY | FREE_FALL  | WATERMARK  | OVERRUN  |
+  val = (1 << 2); // enable free fall
+  accel_write(ADXL343_INT_ENABLE, &val, 1);
+
   // Power control register map:
   // D7 | D6 | D5   | D4         | D3      | D2    | D1 | D0 |
   // 0  | 0  | Link | AUTO_SLEEP | Measure | Sleep | Wakeup  |
   // set measure bit to 1 to put part in measurement mode
-  LOG("Setting measurement mode to 0x8\n");
-  uint8_t tx = 0x08;
-  accel_write(ADXL343_POWER_CTL, &tx, 1);
-  uint8_t ret = 0x00;
-  accel_read(ADXL343_POWER_CTL, &ret, 1);
-  LOG("Measurement mode set to 0x%x\n", ret);
+  val = 0x08;
+  accel_write(ADXL343_POWER_CTL, &val, 1);
+
   return 0;
+}
+
+void accel_determine_interrupt_source(uint8_t *reg) 
+{
+  accel_read(ADXL343_INT_SOURCE, reg, 1);
 }
 
 int accel_get_acceleration()
@@ -110,7 +163,7 @@ int accel_get_acceleration()
   return 0;
 }
 
-static uint32_t accel_read(uint8_t start_register, uint8_t *rx, uint32_t nbytes)
+static int accel_read(uint8_t start_register, uint8_t *rx, uint32_t nbytes)
 {
   if (nbytes <= 0 || rx == NULL) return -1;
   USART1->CMD |= USART_CMD_CLEARTX | USART_CMD_CLEARRX;
@@ -133,7 +186,7 @@ static uint32_t accel_read(uint8_t start_register, uint8_t *rx, uint32_t nbytes)
   return 0;
 }
 
-static uint32_t accel_write(uint8_t start_register, uint8_t *tx, uint32_t nbytes) 
+static int accel_write(uint8_t start_register, uint8_t *tx, uint32_t nbytes) 
 {
   if (nbytes <= 0 || tx == NULL) return -1;
   USART1->CMD |= USART_CMD_CLEARTX | USART_CMD_CLEARRX;

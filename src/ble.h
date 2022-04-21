@@ -7,11 +7,13 @@
 #ifndef _BLE_H_
 #define _BLE_H_
 
-#include "em_common.h"
-#include "app_assert.h"
-#include "sl_bluetooth.h"
-#include "gatt_db.h"
+#include <em_common.h>
+#include <sl_bluetooth.h>
+#include <gatt_db.h>
+
 #include "log.h"
+#include "events.h"
+#include "adxl343.h"
 
 void handle_ble_event(sl_bt_msg_t *evt);
 

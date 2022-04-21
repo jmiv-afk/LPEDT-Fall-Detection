@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<!--Custom BLE GATT-->
-<gatt gatt_caching="true" generic_attribute_service="true" header="gatt_db.h" name="Custom BLE GATT" out="gatt_db.c" prefix="gattdb_">
+<!--LPEDT-->
+<gatt gatt_caching="true" generic_attribute_service="true" header="gatt_db.h" name="LPEDT" out="gatt_db.c" prefix="gattdb_">
   
   <!--Generic Access-->
   <service advertise="false" name="Generic Access" requirement="mandatory" sourceId="org.bluetooth.service.generic_access" type="primary" uuid="1800">
@@ -9,7 +9,7 @@
     <!--Device Name-->
     <characteristic const="false" id="device_name" name="Device Name" sourceId="org.bluetooth.characteristic.gap.device_name" uuid="2A00">
       <informativeText/>
-      <value length="13" type="utf-8" variable_length="false">LPEDT</value>
+      <value length="20" type="utf-8" variable_length="false">LPEDT Fall Detection</value>
       <properties>
         <read authenticated="false" bonded="false" encrypted="false"/>
         <write authenticated="false" bonded="false" encrypted="false"/>
@@ -46,6 +46,31 @@
       <properties>
         <read authenticated="false" bonded="false" encrypted="false"/>
       </properties>
+    </characteristic>
+  </service>
+  
+  <!--Fall Detection Service-->
+  <service advertise="false" id="fall_detection_service" name="Fall Detection Service" requirement="mandatory" sourceId="" type="primary" uuid="087f296c-7df1-4ee7-ab98-e119257ee303">
+    <informativeText/>
+    
+    <!--Fall Status-->
+    <characteristic const="false" id="fall_status" name="Fall Status" sourceId="" uuid="d149b189-9457-4389-b523-c667127985ed">
+      <informativeText/>
+      <value length="1" type="hex" variable_length="false">00</value>
+      <properties>
+        <read authenticated="false" bonded="false" encrypted="false"/>
+        <indicate authenticated="false" bonded="false" encrypted="false"/>
+      </properties>
+      
+      <!--Client Characteristic Configuration-->
+      <descriptor const="false" discoverable="true" id="client_characteristic_configuration" name="Client Characteristic Configuration" sourceId="org.bluetooth.descriptor.gatt.client_characteristic_configuration" uuid="2902">
+        <properties>
+          <read authenticated="false" bonded="false" encrypted="false"/>
+          <write authenticated="false" bonded="false" encrypted="false"/>
+        </properties>
+        <value length="2" type="hex" variable_length="false">00</value>
+        <informativeText>Abstract: The Client Characteristic Configuration descriptor defines how the characteristic may be configured by a specific client. Summary: This descriptor shall be persistent across connections for bonded devices.         The Client Characteristic Configuration descriptor is unique for each client. A client may read and write this descriptor to determine and set the configuration for that client.         Authentication and authorization may be required by the server to write this descriptor.         The default value for the Client Characteristic Configuration descriptor is 0x00. Upon connection of non-binded clients, this descriptor is set to the default value. </informativeText>
+      </descriptor>
     </characteristic>
   </service>
 </gatt>
