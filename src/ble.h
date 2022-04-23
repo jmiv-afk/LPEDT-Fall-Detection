@@ -1,6 +1,6 @@
 /* -----------------------------------------------------------------------------
  * @file   ble.h
- * @brief  
+ * @brief  Bluetooth Low Energy event handling, application programming
  * @author Jake Michael, jami1063@colorado.edu
  * ---------------------------------------------------------------------------*/
 
@@ -16,5 +16,7 @@
 #include "adxl343.h"
 
 void handle_ble_event(sl_bt_msg_t *evt);
+
+int send_indication();
 
 #endif // _BLE_H_

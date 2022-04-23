@@ -33,16 +33,16 @@ static inline void accel_cs_low() { GPIO_PinOutClear(ACCEL_CS_PORT, ACCEL_CS_PIN
 void GPIO_EVEN_IRQHandler()
 {
   CORE_CRITICAL_SECTION(
-  uint32_t flags = GPIO_IntGetEnabled() & 0x55555555; // pickoff even bits
-  GPIO_IntClear(flags);
-  sl_bt_external_signal(evt_accel_GPIO_INT1);
+    uint32_t flags = GPIO_IntGetEnabled() & 0x55555555; // pickoff even bits
+    GPIO_IntClear(flags);
+    sl_bt_external_signal(evt_accel_GPIO_INT1);
   );
 }
 
 int accel_init()
 {
   // note: SPI is a part of the USART peripheral on the blue gecko
-  // Universal Synchronous Asynchronous Reciever Transmitter
+  // Universal Synchronous Asynchronous Receiver Transmitter
   // enable clocks for USART
   CMU_ClockEnable(cmuClock_HFPER, true);
   CMU_ClockEnable(cmuClock_USART1, true);
@@ -53,20 +53,6 @@ int accel_init()
   GPIO_PinModeSet(ACCEL_TX_PORT, ACCEL_TX_PIN, gpioModePushPull, 0);
   GPIO_PinModeSet(ACCEL_RX_PORT, ACCEL_RX_PIN, gpioModeInput, 0);
   GPIO_PinModeSet(ACCEL_CS_PORT, ACCEL_CS_PIN, gpioModePushPull, 1);
-
-  // setup and configure interrupt GPIO's
-  GPIO_PinModeSet(ACCEL_INT1_PORT, ACCEL_INT1_PIN, gpioModeInput, 0);
-  // disable interrupts
-  uint32_t flags = GPIO_IntGetEnabled();
-  GPIO_IntDisable(flags);
-  GPIO_IntClear(flags);
-  GPIO_ExtIntConfig( ACCEL_INT1_PORT, // port
-                     ACCEL_INT1_PIN,  // pin
-                     ACCEL_INT1_PIN,  // interrupt number
-                     1,               // rising edge enable 
-                     0,               // falling edge enable
-                     1                // enable upon return
-                   );
 
   // initialize USART1 for synchronous master mode, MSB first, CPOL=1, CPHA=1
   USART_Reset(USART1);
@@ -114,14 +100,34 @@ int accel_init()
   // set bandwidth register:
   // D7 | D6 | D5 | D4        | D3 | D2 | D1 | D0 |
   // 0  | 0  | 0  | LOW_POWER |      Rate         |
-  val = (1 << 4) | (0b1010); // use 100 Hz, low pwr adxl343 datasheet pg 12
+  val = (1 << 4) | (0b0000010);  // use 100 Hz
   accel_write(ADXL343_BW_RATE, &val, 1); 
 
+  // set inactivity threshold (scale factor = 62.5 mg/LSB)
+  val = 8; // = 1/2 g
+  accel_write(ADXL343_THRESH_INACT, &val, 1);
+  // set inactivity time (scale factor = 1 sec/LSB)
+  val = 4; // 4 seconds
+  accel_write(ADXL343_TIME_INACT, &val, 1);
+
+  // set activity threshold (scale factor = 62.5 mg/LSB)
+  val = 4; // = 1/4 g
+  accel_write(ADXL343_THRESH_ACT, &val, 1);
+
+  // activity/inactivity control
+  // D7          | D6              | D5              | D4           
+  // ACT AC/DC   | ACT_X enable    | ACT_Y enable    | ACT_Z enable   | 
+  // ------------+-----------------+-----------------+----------------+
+  // D3          | D2              | D1              | D0             |
+  // INACT AC/DC | INACT_X enable  | INACT_Y enable  | INACT_Z enable |
+  val = 0b11111111; // all axis, ac coupled operation
+  accel_write(ADXL343_ACT_INACT_CTL, &val, 1);
+
   // set free-fall threshold (scale factor = 62.5 mg/LSB)
-  val = 9; // = (62.5 * 9 = 562.5 mg)
+  val = 9;
   accel_write(ADXL343_THRESH_FF, &val, 1);
   // set free-fall time (scale factor = 5 ms/LSB)
-  val = 20; // = (5 * 20 = 100 ms)
+  val = 40; // 200 msec
   accel_write(ADXL343_TIME_FF, &val, 1);
 
   // setup interrupts
@@ -131,15 +137,41 @@ int accel_init()
   // -----------+------------+------------+----------+
   // D3         | D2         | D1         | D0       |
   // INACTIVITY | FREE_FALL  | WATERMARK  | OVERRUN  |
-  val = (1 << 2); // enable free fall
+  val = 0b00011100; // enable free fall, activity, inactivity
   accel_write(ADXL343_INT_ENABLE, &val, 1);
 
   // Power control register map:
   // D7 | D6 | D5   | D4         | D3      | D2    | D1 | D0 |
   // 0  | 0  | Link | AUTO_SLEEP | Measure | Sleep | Wakeup  |
-  // set measure bit to 1 to put part in measurement mode
-  val = 0x08;
+  val = 0b00111000; // enable link, auto sleep, measurement mode
   accel_write(ADXL343_POWER_CTL, &val, 1);
+
+  // clear interrupt sources
+  accel_determine_interrupt_source(&val);
+  // setup and configure interrupt GPIO's
+  GPIO_PinModeSet(ACCEL_INT1_PORT, ACCEL_INT1_PIN, gpioModeInput, 0);
+  // disable interrupts
+  uint32_t flags = GPIO_IntGetEnabled();
+  GPIO_IntDisable(flags);
+  GPIO_IntClear(flags);
+  GPIO_ExtIntConfig( ACCEL_INT1_PORT, // port
+                     ACCEL_INT1_PIN,  // pin
+                     ACCEL_INT1_PIN,  // interrupt number
+                     true,            // rising edge enable
+                     false,           // falling edge enable
+                     true             // enable upon return
+                    );
+  // don't forget the NVIC!!!
+  NVIC_ClearPendingIRQ(GPIO_EVEN_IRQn);
+  NVIC_EnableIRQ(GPIO_EVEN_IRQn);
+
+  // read out final register settings
+  memset(settings, 0x0, settings_len);
+  accel_read(ADXL343_THRESH_TAP, settings, settings_len);
+  for (int i=0; i<settings_len; i++)
+  {
+    LOG("Reg: 0x%x = 0x%x", i+0x1d, settings[i]);
+  }
 
   return 0;
 }

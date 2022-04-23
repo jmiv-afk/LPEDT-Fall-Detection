@@ -59,6 +59,10 @@ SL_WEAK void app_init(void)
 SL_WEAK void app_process_action(void)
 {
   // do nothing
+  //while(1)
+  //{
+  //  accel_get_acceleration();
+  //}
 }
 
 // Bluetooth stack event handler.

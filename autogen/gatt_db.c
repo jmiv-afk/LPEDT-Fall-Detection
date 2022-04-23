@@ -25,14 +25,26 @@ GATT_DATA(const uint16_t gattdb_uuidtable_16_map[]) =
 GATT_DATA(const uint8_t gattdb_uuidtable_128_map[]) =
 {
   0xed, 0x85, 0x79, 0x12, 0x67, 0xc6, 0x23, 0xb5, 0x89, 0x43, 0x57, 0x94, 0x89, 0xb1, 0x49, 0xd1, 
+  0x3b, 0x50, 0xb6, 0xb5, 0x44, 0xab, 0x67, 0x87, 0xd0, 0x4e, 0x68, 0x8b, 0x41, 0xb0, 0x2c, 0x4d, 
+  0xf4, 0x43, 0xca, 0x9c, 0x51, 0x43, 0x20, 0x9d, 0xad, 0x40, 0xab, 0xee, 0x16, 0x12, 0x67, 0x23, 
   0x63, 0x60, 0x32, 0xe0, 0x37, 0x5e, 0xa4, 0x88, 0x53, 0x4e, 0x6d, 0xfb, 0x64, 0x35, 0xbf, 0xf7, 
 };
-GATT_DATA(const sli_bt_gattdb_value_t gattdb_attribute_field_22) = {
+GATT_DATA(const sli_bt_gattdb_value_t gattdb_attribute_field_28) = {
   .len = 16,
   .data = { 0xf0, 0x19, 0x21, 0xb4, 0x47, 0x8f, 0xa4, 0xbf, 0xa1, 0x4f, 0x63, 0xfd, 0xee, 0xd6, 0x14, 0x1d, }
 };
-GATT_DATA(sli_bt_gattdb_attribute_chrvalue_t gattdb_attribute_field_20) = {
+GATT_DATA(sli_bt_gattdb_attribute_chrvalue_t gattdb_attribute_field_26) = {
+  .properties = 0x2a,
+  .max_len = 1,
+  .data = { 0x00, },
+};
+GATT_DATA(sli_bt_gattdb_attribute_chrvalue_t gattdb_attribute_field_23) = {
   .properties = 0x22,
+  .max_len = 1,
+  .data = { 0x00, },
+};
+GATT_DATA(sli_bt_gattdb_attribute_chrvalue_t gattdb_attribute_field_20) = {
+  .properties = 0x2a,
   .max_len = 1,
   .data = { 0x00, },
 };
@@ -106,25 +118,31 @@ GATT_DATA(const sli_bt_gattdb_attribute_t gattdb_attributes_map[]) = {
   { .handle = 0x11, .uuid = 0x0002, .permissions = 0x801, .caps = 0xffff, .state = 0x00, .datatype = 0x05, .characteristic = { .properties = 0x02, .char_uuid = 0x0006 } },
   { .handle = 0x12, .uuid = 0x0006, .permissions = 0x801, .caps = 0xffff, .state = 0x00, .datatype = 0x01, .dynamicdata = &gattdb_attribute_field_17 },
   { .handle = 0x13, .uuid = 0x0000, .permissions = 0x801, .caps = 0xffff, .state = 0x00, .datatype = 0x00, .constdata = &gattdb_attribute_field_18 },
-  { .handle = 0x14, .uuid = 0x0002, .permissions = 0x801, .caps = 0xffff, .state = 0x00, .datatype = 0x05, .characteristic = { .properties = 0x22, .char_uuid = 0x8000 } },
-  { .handle = 0x15, .uuid = 0x8000, .permissions = 0x801, .caps = 0xffff, .state = 0x00, .datatype = 0x01, .dynamicdata = &gattdb_attribute_field_20 },
+  { .handle = 0x14, .uuid = 0x0002, .permissions = 0x801, .caps = 0xffff, .state = 0x00, .datatype = 0x05, .characteristic = { .properties = 0x2a, .char_uuid = 0x8000 } },
+  { .handle = 0x15, .uuid = 0x8000, .permissions = 0x803, .caps = 0xffff, .state = 0x00, .datatype = 0x01, .dynamicdata = &gattdb_attribute_field_20 },
   { .handle = 0x16, .uuid = 0x0007, .permissions = 0x803, .caps = 0xffff, .state = 0x00, .datatype = 0x03, .configdata = { .flags = 0x02, .clientconfig_index = 0x01 } },
-  { .handle = 0x17, .uuid = 0x0000, .permissions = 0x801, .caps = 0xffff, .state = 0x00, .datatype = 0x00, .constdata = &gattdb_attribute_field_22 },
-  { .handle = 0x18, .uuid = 0x0002, .permissions = 0x801, .caps = 0xffff, .state = 0x00, .datatype = 0x05, .characteristic = { .properties = 0x08, .char_uuid = 0x8001 } },
-  { .handle = 0x19, .uuid = 0x8001, .permissions = 0x802, .caps = 0xffff, .state = 0x00, .datatype = 0x07, .dynamicdata = NULL },
+  { .handle = 0x17, .uuid = 0x0002, .permissions = 0x801, .caps = 0xffff, .state = 0x00, .datatype = 0x05, .characteristic = { .properties = 0x22, .char_uuid = 0x8001 } },
+  { .handle = 0x18, .uuid = 0x8001, .permissions = 0x801, .caps = 0xffff, .state = 0x00, .datatype = 0x01, .dynamicdata = &gattdb_attribute_field_23 },
+  { .handle = 0x19, .uuid = 0x0007, .permissions = 0x803, .caps = 0xffff, .state = 0x00, .datatype = 0x03, .configdata = { .flags = 0x02, .clientconfig_index = 0x02 } },
+  { .handle = 0x1a, .uuid = 0x0002, .permissions = 0x801, .caps = 0xffff, .state = 0x00, .datatype = 0x05, .characteristic = { .properties = 0x2a, .char_uuid = 0x8002 } },
+  { .handle = 0x1b, .uuid = 0x8002, .permissions = 0x803, .caps = 0xffff, .state = 0x00, .datatype = 0x01, .dynamicdata = &gattdb_attribute_field_26 },
+  { .handle = 0x1c, .uuid = 0x0007, .permissions = 0x803, .caps = 0xffff, .state = 0x00, .datatype = 0x03, .configdata = { .flags = 0x02, .clientconfig_index = 0x03 } },
+  { .handle = 0x1d, .uuid = 0x0000, .permissions = 0x801, .caps = 0xffff, .state = 0x00, .datatype = 0x00, .constdata = &gattdb_attribute_field_28 },
+  { .handle = 0x1e, .uuid = 0x0002, .permissions = 0x801, .caps = 0xffff, .state = 0x00, .datatype = 0x05, .characteristic = { .properties = 0x08, .char_uuid = 0x8003 } },
+  { .handle = 0x1f, .uuid = 0x8003, .permissions = 0x802, .caps = 0xffff, .state = 0x00, .datatype = 0x07, .dynamicdata = NULL },
 };
 
 GATT_HEADER(const sli_bt_gattdb_t gattdb) = {
   .attributes = gattdb_attributes_map,
-  .attribute_table_size = 25,
-  .attribute_num = 25,
+  .attribute_table_size = 31,
+  .attribute_num = 31,
   .uuid16 = gattdb_uuidtable_16_map,
   .uuid16_table_size = 11,
   .uuid16_num = 11,
   .uuid128 = gattdb_uuidtable_128_map,
-  .uuid128_table_size = 2,
-  .uuid128_num = 2,
-  .num_ccfg = 2,
+  .uuid128_table_size = 4,
+  .uuid128_num = 4,
+  .num_ccfg = 4,
   .caps_mask = 0xffff,
   .enabled_caps = 0xffff,
 };
