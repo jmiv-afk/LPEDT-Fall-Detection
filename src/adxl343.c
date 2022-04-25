@@ -100,20 +100,19 @@ int accel_init()
   // set bandwidth register:
   // D7 | D6 | D5 | D4        | D3 | D2 | D1 | D0 |
   // 0  | 0  | 0  | LOW_POWER |      Rate         |
-  val = (1 << 4) | (0b0000010);  // use 100 Hz
+  val = 0b0000010;  // use 100 Hz
   accel_write(ADXL343_BW_RATE, &val, 1); 
 
+  // ACTIVITY / INACTIVITY
   // set inactivity threshold (scale factor = 62.5 mg/LSB)
-  val = 8; // = 1/2 g
+  val = 8; 
   accel_write(ADXL343_THRESH_INACT, &val, 1);
   // set inactivity time (scale factor = 1 sec/LSB)
-  val = 4; // 4 seconds
+  val = 20; 
   accel_write(ADXL343_TIME_INACT, &val, 1);
-
   // set activity threshold (scale factor = 62.5 mg/LSB)
-  val = 4; // = 1/4 g
+  val = 4; 
   accel_write(ADXL343_THRESH_ACT, &val, 1);
-
   // activity/inactivity control
   // D7          | D6              | D5              | D4           
   // ACT AC/DC   | ACT_X enable    | ACT_Y enable    | ACT_Z enable   | 
@@ -123,11 +122,32 @@ int accel_init()
   val = 0b11111111; // all axis, ac coupled operation
   accel_write(ADXL343_ACT_INACT_CTL, &val, 1);
 
+
+  // DOUBLETAP
+  // set doubletap threshold (scale factor = 62.5 mg/LSB)
+  val = 40; 
+  accel_write(ADXL343_THRESH_TAP, &val, 1);
+  // set doubletap duration (625 us/LSB)
+  val = 50; 
+  accel_write(ADXL343_DUR, &val, 1);
+  // set doubletap latency (scale factor = 1.25 ms/LSB)
+  val = 20; 
+  accel_write(ADXL343_LATENT, &val, 1);
+  // set doubletap window (scale factor = 1.25 ms/LSB)
+  val = 0xFF; 
+  accel_write(ADXL343_WINDOW, &val, 1);
+  // set axes register:
+  // D7 | D6 | D5 | D4 | D3        | D2 | D1 | D0 |
+  // 0  | 0  | 0  |  0 | surpress  | X  | Y  | Z  |
+  val = 0b0000111; 
+  accel_write(ADXL343_TAP_AXES, &val, 1);
+
+  // FREEFALL
   // set free-fall threshold (scale factor = 62.5 mg/LSB)
-  val = 9;
+  val = 7;
   accel_write(ADXL343_THRESH_FF, &val, 1);
   // set free-fall time (scale factor = 5 ms/LSB)
-  val = 40; // 200 msec
+  val = 25; 
   accel_write(ADXL343_TIME_FF, &val, 1);
 
   // setup interrupts
@@ -137,7 +157,7 @@ int accel_init()
   // -----------+------------+------------+----------+
   // D3         | D2         | D1         | D0       |
   // INACTIVITY | FREE_FALL  | WATERMARK  | OVERRUN  |
-  val = 0b00011100; // enable free fall, activity, inactivity
+  val = 0b00111100; // enable free fall, activity, inactivity
   accel_write(ADXL343_INT_ENABLE, &val, 1);
 
   // Power control register map:
@@ -166,12 +186,14 @@ int accel_init()
   NVIC_EnableIRQ(GPIO_EVEN_IRQn);
 
   // read out final register settings
+  /*
   memset(settings, 0x0, settings_len);
   accel_read(ADXL343_THRESH_TAP, settings, settings_len);
   for (int i=0; i<settings_len; i++)
   {
     LOG("Reg: 0x%x = 0x%x", i+0x1d, settings[i]);
   }
+  */
 
   return 0;
 }
