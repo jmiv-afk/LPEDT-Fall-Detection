@@ -82,15 +82,6 @@ void handle_ble_event(sl_bt_msg_t *evt)
         LOG("Error sl_bt_gatt_server_write_attribute_value");
       }
 
-      sc = sl_bt_connection_set_default_parameters(
-             492,     // min interval, time = val*1.25 ms
-             510,     // max interval, time = val*1.25 ms
-             2,       // latency
-             600,     // timeout - must be larger than (1+latency)*2*max_interval
-             0x0,
-             0xff
-          );
-
       // Create an advertising set.
       sc = sl_bt_advertiser_create_set(&advertising_set_handle);
       if (sc != SL_STATUS_OK)
@@ -137,7 +128,7 @@ void handle_ble_event(sl_bt_msg_t *evt)
 
       sc = sl_bt_connection_set_parameters(
                          ble_ctx.conn_handle,
-                         492,     // min interval, time = val*1.25 ms
+                         36,      // min interval, time = val*1.25 ms
                          510,     // max interval, time = val*1.25 ms
                          2,       // latency
                          600,     // timeout - must be larger than (1+latency)*2*max_interval
@@ -265,7 +256,7 @@ void handle_ble_event(sl_bt_msg_t *evt)
         }
         if (source & INT_INACTIVITY)
         {
-          LOG("Activity detected");
+          LOG("Inactivity detected");
           // set flags as index 0, value as index 1
           activity_ctx.buf[0] = 0x0; // setup the flags
           activity_ctx.buf[1] = 0x0;

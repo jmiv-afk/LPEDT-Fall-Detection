@@ -125,29 +125,29 @@ int accel_init()
 
   // DOUBLETAP
   // set doubletap threshold (scale factor = 62.5 mg/LSB)
-  val = 40; 
+  val = 0x30;
   accel_write(ADXL343_THRESH_TAP, &val, 1);
   // set doubletap duration (625 us/LSB)
-  val = 50; 
+  val = 0x10;
   accel_write(ADXL343_DUR, &val, 1);
   // set doubletap latency (scale factor = 1.25 ms/LSB)
-  val = 20; 
+  val = 0x10;
   accel_write(ADXL343_LATENT, &val, 1);
   // set doubletap window (scale factor = 1.25 ms/LSB)
   val = 0xFF; 
   accel_write(ADXL343_WINDOW, &val, 1);
   // set axes register:
   // D7 | D6 | D5 | D4 | D3        | D2 | D1 | D0 |
-  // 0  | 0  | 0  |  0 | surpress  | X  | Y  | Z  |
+  // 0  | 0  | 0  |  0 | supress   | X  | Y  | Z  |
   val = 0b0000111; 
   accel_write(ADXL343_TAP_AXES, &val, 1);
 
   // FREEFALL
   // set free-fall threshold (scale factor = 62.5 mg/LSB)
-  val = 7;
+  val = 5;
   accel_write(ADXL343_THRESH_FF, &val, 1);
   // set free-fall time (scale factor = 5 ms/LSB)
-  val = 25; 
+  val = 40;
   accel_write(ADXL343_TIME_FF, &val, 1);
 
   // setup interrupts
